@@ -1,11 +1,12 @@
-from bs4 import BeautifulSoup
-import requests
 import re
-
+from datetime import datetime
+from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Union
-from typing import List
-from typing import Dict
+
+import requests
+from bs4 import BeautifulSoup
 
 from .utils import format_price
 
@@ -19,7 +20,8 @@ class Ad:
         d_pid: Optional[int] = None,
         description: Optional[str] = None,
         attributes: Optional[Dict] = None,
-        image_urls: Optional[List[str]] = None
+        image_urls: Optional[List[str]] = None,
+        posted: Optional[datetime] = None,
     ) -> None:
         """An abstraction for a Craigslist 'Ad'. At the bare minimum you need a
         `url` to define an ad. Although, at search-time, information such as the
@@ -35,6 +37,7 @@ class Ad:
         self.description = description
         self.attributes = attributes
         self.image_urls = image_urls
+        self.posted = posted
 
     def __repr__(self) -> str:
         if (self.title is None) or (self.price is None):
@@ -54,6 +57,7 @@ class Ad:
             self.attributes = parser.attributes
             self.image_urls = parser.image_urls
             self.metadata = parser.metadata
+            self.posted = parser.posted
 
         return self.request.status_code
 
@@ -66,6 +70,7 @@ class Ad:
             "description": self.description,
             "image_urls": self.image_urls,
             "attributes": self.attributes,
+            "posted": self.posted,
         }
 
 
@@ -124,4 +129,9 @@ class AdParser:
     def metadata(self) -> List[BeautifulSoup]:
         return self.soup.find_all("meta")
 
-
+    @property
+    def posted(self) -> Optional[datetime]:
+        posted_element = self.soup.find("time", class_="date")
+        if posted_element:
+            return datetime.strptime(posted_element["datetime"], "%Y-%m-%dT%H:%M:%S%z")
+        return None
