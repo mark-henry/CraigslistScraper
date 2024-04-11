@@ -85,7 +85,7 @@ class AdParser:
     def __init__(self, content: Union[str, bytes], **kwargs) -> None:
         self.soup = BeautifulSoup(content, "html.parser", **kwargs)
 
-        # Remove QR text. This is important when parsing the description. 
+        # Remove QR text. This is important when parsing the description.
         for qr in self.soup.find_all("p", class_ = "print-qrcode-label"):
             qr.decompose()
 
@@ -94,8 +94,11 @@ class AdParser:
         return self.soup.find("meta", property = "og:url")["content"] 
 
     @property
-    def price(self) -> float:
-        return format_price(self.soup.find("span", class_ = "price").text)
+    def price(self) -> Optional[float]:
+        price_element = self.soup.find("span", class_="price")
+        if price_element:
+            return format_price(price_element.text)
+        return None
 
     @property
     def title(self) -> str:
